@@ -238,7 +238,7 @@
             renderizarAdmin();
         } else {
             document.getElementById('painel-func').classList.add('ativa');
-            document.getElementById('boas-vindas').innerText = `Olá, ${user} 👋`;
+            document.getElementById('boas-vindas').innerText = `Olá, ${user} 👋 Essas são suas tarefas de hoje!`;
             setDia(dias[new Date().getDay() === 0 ? 6 : new Date().getDay()-1]);
         }
     }
