@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Limpeza</title>
+    <style>
+        :root { --primary: #007bff; --success: #28a745; --warning: #ffc107; --danger: #dc3545; --dark: #343a40; --purple: #6f42c1; --teal: #20c997; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
+        .container { max-width: 950px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        h2, h3 { text-align: center; color: var(--dark); margin-top: 0; }
+        .secao { display: none; }
+        .ativa { display: block; }
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #ddd; box-sizing: border-box; }
+        button { cursor: pointer; border: none; font-weight: bold; transition: 0.3s; color: white; }
+        .btn-main { background: var(--primary); }
+        .btn-danger { background: var(--danger); }
+        .btn-teal { background: var(--teal); }
+        
+        /* TABELA COM SCROLL E BORDAS LATERAIS */
+        .tabela-wrapper { 
+            width: 100%; 
+            max-height: 480px; 
+            overflow-y: auto; 
+            border: 1px solid #eee; 
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        table { width: 100%; border-collapse: separate; border-spacing: 0 8px; min-width: 700px; }
+        
+        thead th { 
+            position: sticky; 
+            top: 0; 
+            background: #f8f9fa; 
+            z-index: 10;
+            padding: 12px;
+            text-align: left;
+            border-bottom: 2px solid #dee2e6;
+            color: var(--dark);
+        }
+
+        td { padding: 12px; border-top: 1px solid #f1f1f1; border-bottom: 1px solid #f1f1f1; font-size: 18px; vertical-align: middle; background: white; }
+        
+        /* Ajuste solicitado: Fundo branco, apenas borda colorida */
+        .linha-pendente td:first-child { border-left: 6px solid #f6e05e; border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+        .linha-concluido td:first-child { border-left: 6px solid #48bb78; border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+        td:last-child { border-right: 1px solid #f1f1f1; border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+
+        .status-tag { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; white-space: nowrap; border: 1px solid rgba(0,0,0,0.05); }
+        
+        /* Estilos do Funcionário */
+        .aba-container { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; }
+        .aba { padding: 10px 20px; background: #e9ecef; border-radius: 20px; cursor: pointer; white-space: nowrap; font-size: 14px; color: #333; }
+        .aba.ativa { background: var(--primary); color: white; }
+        .card { background: #fff; border-left: 5px solid var(--primary); padding: 15px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
+        .card.concluido { background-color: #f0fff4 !important; border-left-color: var(--success); }
+        
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 4px; background: var(--warning); display: none; z-index: 1000; }
+        .admin-box { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 20px; }
+
+        /* Estilos Novos Implantados */
+        .reset-box { border: 2px solid #6f42c1; padding: 15px; border-radius: 12px; margin-bottom: 20px; background: #fafafa; }
+        .filtros-container { display: flex; gap: 10px; margin: 15px 0; justify-content: center; }
+        .btn-filter { width: auto; padding: 8px 15px; font-size: 15px; background: #6c757d; }
+        .btn-filter.active { background: var(--primary); }
+        .admin-timer { display: flex; align-items: center; gap: 4px; color: #718096; font-size: 18px; margin-top: 4px; }
+    </style>
+</head>
+<body>
+
+<div id="loader"></div>
+
+<div class="container">
+    <div id="tela-login" class="secao ativa">
+        <h2>🔑 Acesso ao Sistema</h2>
+        <select id="select-user">
+            <option value="admin">Administrador</option>
+            <option value="Ana">Ana</option><option value="Beatriz">Beatriz</option><option value="Claudio">Claudio</option>
+            <option value="Emilia">Emilia</option><option value="Fabiano">Fabiano</option><option value="Irlana">Irlana</option>
+            <option value="Jailma">Jailma</option><option value="Marciana">Marciana</option>
+        </select>
+        <input type="password" id="senha" placeholder="Senha">
+        <button class="btn-main" onclick="fazerLogin()">Entrar</button>
+    </div>
+
+    <div id="painel-admin" class="secao">
+        <h3>⚙️ Painel de Controle</h3>
+        <div class="admin-box">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <select id="adm-andar">
+                    <option value="Térreo">Térreo</option><option value="1º Andar">1º Andar</option>
+                    <option value="2º Andar">2º Andar</option><option value="3º Andar">3º Andar</option>
+                    <option value="4º Andar">4º Andar</option><option value="Copa/Refeitório">Copa/Refeitório</option>
+                </select>
+                <select id="adm-dia">
+                    <option>Segunda</option><option>Terça</option><option>Quarta</option>
+                    <option>Quinta</option><option>Sexta</option><option>Sábado</option><option>Domingo</option>
+                </select>
+            </div>
+            <input type="text" id="adm-tarefa" placeholder="Descrição da Tarefa">
+            <select id="adm-func">
+                <option value="Ana">Ana</option><option value="Beatriz">Beatriz</option><option value="Claudio">Claudio</option>
+                <option value="Emilia">Emilia</option><option value="Fabiano">Fabiano</option><option value="Irlana">Irlana</option>
+                <option value="Jailma">Jailma</option><option value="Marciana">Marciana</option>
+            </select>
+            <button class="btn-main" onclick="adicionarTarefa()" style="background: var(--success);">Adicionar na Escala</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <button class="btn-teal" onclick="reaplicarEscala()">♻️ Nova Semana</button>
+            <button class="btn-danger" onclick="limparSemana()">🔄 Resetar Tudo</button>
+        </div>
+
+        <div class="reset-box" style="margin-top:20px">
+            <h4 style="margin:0 0 10px 0; color:#6f42c1">Resetar Senha</h4>
+            <div style="display:flex; gap:10px">
+                <select id="reset-user-select" style="margin:0">
+                    <option value="Ana">Ana</option><option value="Beatriz">Beatriz</option><option value="Claudio">Claudio</option>
+                    <option value="Emilia">Emilia</option><option value="Fabiano">Fabiano</option><option value="Irlana">Irlana</option>
+                    <option value="Jailma">Jailma</option><option value="Marciana">Marciana</option>
+                </select>
+                <button class="btn-main" style="background:#6f42c1; margin:0; width:150px" onclick="resetarSenha()">Resetar</button>
+            </div>
+        </div>
+
+        <div class="filtros-container">
+            <button class="btn-filter active" id="f-todos" onclick="setFiltro('Todos')">Todas</button>
+            <button class="btn-filter" id="f-pendente" onclick="setFiltro('Pendente')">Pendentes</button>
+            <button class="btn-filter" id="f-concluido" onclick="setFiltro('Concluído')">Concluídas</button>
+        </div>
+
+        <div class="tabela-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Funcionário</th>
+                        <th>Tarefa</th>
+                        <th>Status</th>
+                        <th style="width: 40px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="lista-geral-corpo"></tbody>
+            </table>
+        </div>
+        
+        <button style="background:#6c757d; margin-top: 20px;" onclick="location.reload()">Sair</button>
+    </div>
+
+    <div id="painel-func" class="secao">
+        <h2 id="boas-vindas"></h2>
+        <div class="aba-container" id="abas-dias"></div>
+        <div id="minhas-tarefas"></div>
+        <button style="background:#6c757d" onclick="location.reload()">Sair</button>
+    </div>
+</div>
+
+<script>
+    const URL_API = "https://script.google.com/macros/s/AKfycbwsNqqbq65ksCvVZzUasTRNo48Y76RZsuluiV8zlNGhtF_pS50_oXfR3za6KRM2ANlo/exec"; 
+
+    let tarefas = [];
+    let listaUsuariosNuvem = [];
+    let usuarioLogado = "";
+    let diaSelecionado = "Segunda";
+    let filtroStatus = "Todos";
+    const dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
+
+    function obterData(nomeDia) {
+        const hoje = new Date();
+        const diasRef = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+        const indexAlvo = diasRef.indexOf(nomeDia);
+        const indexHoje = hoje.getDay();
+        const diff = indexAlvo - indexHoje;
+        const dataAlvo = new Date(hoje);
+        dataAlvo.setDate(hoje.getDate() + diff);
+        return `${nomeDia} ${String(dataAlvo.getDate()).padStart(2, '0')}/${String(dataAlvo.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    async function carregarDados() {
+        document.getElementById('loader').style.display = 'block';
+        try {
+            const response = await fetch(URL_API);
+            const data = await response.json();
+            tarefas = data.tarefas;
+            listaUsuariosNuvem = data.usuarios;
+            if (usuarioLogado === 'admin') renderizarAdmin();
+            else if (usuarioLogado) renderizarFunc();
+        } catch (e) { console.error(e); }
+        document.getElementById('loader').style.display = 'none';
+    }
+
+    async function salvar(acao = "save", extra = {}) {
+        document.getElementById('loader').style.display = 'block';
+        try {
+            await fetch(URL_API, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: acao, tarefas: tarefas, ...extra }) });
+            setTimeout(carregarDados, 1500);
+        } catch (e) { console.error(e); }
+    }
+
+    async function resetarSenha() {
+        const user = document.getElementById('reset-user-select').value;
+        if(confirm(`Deseja resetar a senha de ${user}?`)) {
+            await salvar("resetSenha", { usuario: user });
+            alert("Senha resetada!");
+        }
+    }
+
+    function setFiltro(s) {
+        filtroStatus = s;
+        document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
+        if(s === 'Todos') document.getElementById('f-todos').classList.add('active');
+        if(s === 'Pendente') document.getElementById('f-pendente').classList.add('active');
+        if(s === 'Concluído') document.getElementById('f-concluido').classList.add('active');
+        renderizarAdmin();
+    }
+
+    async function fazerLogin() {
+        const user = document.getElementById('select-user').value;
+        const pass = document.getElementById('senha').value;
+        if(!pass) return alert("Digite a senha!");
+        await carregarDados();
+        if (user === 'admin' && pass === '123') return entrarNoPainel('admin');
+        const cadastro = listaUsuariosNuvem.find(u => u.nome === user);
+        if (!cadastro) {
+            if (confirm("Definir senha?")) {
+                await salvar("registrar", { usuario: user, novaSenha: pass });
+                alert("Salvo!"); location.reload();
+            }
+        } else if (cadastro.senha == pass) entrarNoPainel(user);
+        else alert("Senha incorreta!");
+    }
+
+    function entrarNoPainel(user) {
+        usuarioLogado = user;
+        document.getElementById('tela-login').classList.remove('ativa');
+        if (user === 'admin') {
+            document.getElementById('painel-admin').classList.add('ativa');
+            renderizarAdmin();
+        } else {
+            document.getElementById('painel-func').classList.add('ativa');
+            document.getElementById('boas-vindas').innerText = `Olá, ${user} 👋`;
+            setDia(dias[new Date().getDay() === 0 ? 6 : new Date().getDay()-1]);
+        }
+    }
+
+    async function adicionarTarefa() {
+        const t = document.getElementById('adm-tarefa').value;
+        if (!t) return alert("Dê um nome!");
+        tarefas.push({ id: Date.now(), dia: document.getElementById('adm-dia').value, andar: document.getElementById('adm-andar').value, tarefa: t, usuario: document.getElementById('adm-func').value, status: "Pendente", inicio: "", fim: "", duracao: "", inicioRaw: "" });
+        renderizarAdmin(); await salvar();
+        document.getElementById('adm-tarefa').value = "";
+    }
+
+    function renderizarAdmin() {
+        const corpo = document.getElementById('lista-geral-corpo');
+        const filtradas = tarefas.filter(t => filtroStatus === 'Todos' || t.status === filtroStatus);
+        corpo.innerHTML = filtradas.map(t => {
+            const classeStatus = t.status === 'Concluído' ? 'linha-concluido' : 'linha-pendente';
+            
+            // Lógica para converter minutos em Horas e Minutos
+            let tempoFormatado = "";
+            if(t.duracao) {
+                const totalMinutos = parseInt(t.duracao);
+                const horas = Math.floor(totalMinutos / 60);
+                const mins = totalMinutos % 60;
+                tempoFormatado = horas > 0 ? `${horas}h ${mins}min` : `${mins}min`;
+            }
+
+            return `
+            <tr class="${classeStatus}">
+                <td><small style="color:#718096">${obterData(t.dia)}</small></td>
+                <td><strong>${t.usuario}</strong></td>
+                <td>
+                    <strong>${t.andar}</strong>: ${t.tarefa}
+                    ${t.status === 'Concluído' ? `<div class="admin-timer">⏱️ ${tempoFormatado}</div>` : ''}
+                </td>
+                <td>
+                    <span class="status-tag" style="background:${t.status==='Concluído'?'#c6f6d5':'#feebc8'}; color:${t.status==='Concluído'?'#22543d':'#744210'}">
+                        ${t.status}
+                    </span>
+                </td>
+                <td>
+                    <button onclick="removerTarefa(${t.id})" style="background:none; width:auto; padding:0; font-size:18px; color:inherit">🗑️</button>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    function renderizarFunc() {
+        const abas = document.getElementById('abas-dias');
+        abas.innerHTML = dias.map(d => `<div class="aba ${d === diaSelecionado ? 'ativa' : ''}" onclick="setDia('${d}')">${d}</div>`).join('');
+        const filtradas = tarefas.filter(t => t.usuario === usuarioLogado && t.dia === diaSelecionado);
+        document.getElementById('minhas-tarefas').innerHTML = filtradas.length ? filtradas.map(t => `
+            <div class="card ${t.status === 'Concluído' ? 'concluido' : ''}">
+                <div>
+                    <span style="font-size:11px; color:#718096">${obterData(t.dia)}</span><br>
+                    <strong>${t.andar}</strong><br><small>${t.tarefa}</small>
+                    ${t.duracao ? `<br><small style="color:var(--success)">Duração: ${t.duracao} min</small>` : ''}
+                </div>
+                <div>${t.status === 'Concluído' ? '✅' : `<button style="background:${t.inicio?'var(--success)':'var(--warning)'}; width:auto; padding:8px 15px" onclick="acaoTarefa(${t.id}, '${t.inicio?'stop':'start'}')">${t.inicio?'Fim':'Início'}</button>`}</div>
+            </div>`).join('') : "<p style='text-align:center'>Nenhuma tarefa.</p>";
+    }
+
+    async function acaoTarefa(id, tipo) {
+        const t = tarefas.find(x => x.id == id);
+        const agora = new Date();
+        const hora = agora.getHours().toString().padStart(2, '0') + ":" + agora.getMinutes().toString().padStart(2, '0');
+        if (tipo === 'start') { t.inicio = hora; t.inicioRaw = agora.getTime(); t.status = "Andamento"; }
+        else { t.fim = hora; t.duracao = Math.floor((agora.getTime() - t.inicioRaw) / 60000); t.status = "Concluído"; }
+        renderizarFunc(); await salvar();
+    }
+
+    async function removerTarefa(id) { if(confirm("Excluir?")) { tarefas = tarefas.filter(t => t.id != id); renderizarAdmin(); await salvar(); } }
+    async function limparSemana() { if(confirm("Apagar TUDO?")) { tarefas = []; renderizarAdmin(); await salvar("clear"); } }
+    async function reaplicarEscala() { if(confirm("Manter para próxima semana?")) { await salvar("arquivar"); tarefas = tarefas.map(t => ({ ...t, status: "Pendente", inicio: "", fim: "", duracao: "", inicioRaw: "" })); renderizarAdmin(); await salvar(); } }
+    function setDia(d) { diaSelecionado = d; renderizarFunc(); }
+    carregarDados();
+</script>
+</body>
+</html>
