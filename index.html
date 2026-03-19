@@ -219,7 +219,7 @@
         const pass = document.getElementById('senha').value;
         if(!pass) return alert("Digite a senha!");
         await carregarDados();
-        if (user === 'admin' && pass === '123') return entrarNoPainel('admin');
+        if (user === 'admin' && pass === '813147') return entrarNoPainel('admin');
         const cadastro = listaUsuariosNuvem.find(u => u.nome === user);
         if (!cadastro) {
             if (confirm("Definir senha?")) {
@@ -238,7 +238,7 @@
             renderizarAdmin();
         } else {
             document.getElementById('painel-func').classList.add('ativa');
-            document.getElementById('boas-vindas').innerText = `Olá, ${user} 👋 Essas são suas tarefas de hoje!`;
+            document.getElementById('boas-vindas').innerText = `Olá, ${user} 👋 Essas são suas tarefas!`;
             setDia(dias[new Date().getDay() === 0 ? 6 : new Date().getDay()-1]);
         }
     }
