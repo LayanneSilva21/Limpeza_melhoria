@@ -252,7 +252,7 @@
             renderizarAdmin();
         } else {
             document.getElementById('painel-func').classList.add('ativa');
-            document.getElementById('boas-vindas').innerText = `Olá, ${user} 👋`;
+            document.getElementById('boas-vindas').innerText = `Olá, ${user} 👋, Essas são suas tarefas!`;
             const hojeIndex = new Date().getDay();
             setDia(dias[hojeIndex === 0 ? 6 : hojeIndex - 1]);
         }
