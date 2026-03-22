@@ -347,7 +347,33 @@
         await salvar();
     }
 
-    async function removerTarefa(id) { if(confirm("Excluir tarefa?")) { tarefas = tarefas.filter(t => t.id != id); renderizarAdmin(); await salvar(); } }
+    async function removerTarefa(id) {
+    // 1. Confirmação para evitar erros
+    if (!confirm("Deseja excluir apenas esta cópia da tarefa?")) return;
+
+    // 2. Remove APENAS o item com esse ID da lista visual (no navegador)
+    // Isso evita que tarefas com nomes iguais sumam juntas
+    tarefas = tarefas.filter(t => t.id != id);
+
+    // 3. Atualiza o que você vê na tela imediatamente
+    renderizarAdmin();
+
+    // 4. Avisa a planilha para deletar apenas aquela linha específica
+    try {
+        await fetch(URL_API, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify({ 
+                action: "delete_single", 
+                idExcluir: id 
+            })
+        });
+        console.log("Tarefa excluída da planilha.");
+    } catch (error) {
+        console.error("Erro ao excluir na planilha:", error);
+        alert("Erro ao sincronizar exclusão. Recarregue a página.");
+    }
+}
     async function limparSemana() { if(confirm("Apagar TUDO definitivamente?")) { tarefas = []; renderizarAdmin(); await salvar("clear"); } }
     async function reaplicarEscala() { if(confirm("Resetar status e manter tarefas para a próxima semana?")) { await salvar("arquivar"); tarefas = tarefas.map(t => ({ ...t, status: "Pendente", inicio: "", fim: "", duracao: "", inicioRaw: "" })); renderizarAdmin(); await salvar(); } }
     function setDia(d) { diaSelecionado = d; renderizarFunc(); }
