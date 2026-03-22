@@ -311,6 +311,19 @@
             </tr>`;
         }).join('');
     }
+    function falarTarefa(texto) {
+    if ('speechSynthesis' in window) {
+        // Cancela qualquer fala anterior para não sobrepor vozes
+        window.speechSynthesis.cancel();
+        
+        const mensagem = new SpeechSynthesisUtterance(texto);
+        mensagem.lang = 'pt-BR'; // Define o idioma para Português
+        mensagem.rate = 0.9;    // Velocidade um pouco mais lenta para facilitar o entendimento
+        window.speechSynthesis.speak(mensagem);
+    } else {
+        alert("Seu navegador não suporta leitura de voz.");
+    }
+}
 
     function renderizarFunc() {
         const abas = document.getElementById('abas-dias');
