@@ -330,16 +330,25 @@
         abas.innerHTML = dias.map(d => `<div class="aba ${d === diaSelecionado ? 'ativa' : ''}" onclick="setDia('${d}')">${d}</div>`).join('');
         const filtradas = tarefas.filter(t => t.usuario === usuarioLogado && t.dia === diaSelecionado);
         document.getElementById('minhas-tarefas').innerHTML = filtradas.length ? filtradas.map(t => `
-            <div class="card ${t.status === 'Concluído' ? 'concluido' : ''}">
-                <div>
-                    <span style="font-size:11px; color:#718096">${obterData(t.dia)}</span><br>
-                    <strong>${t.andar}</strong><br><small>${t.tarefa}</small>
-                    ${t.duracao ? `<br><small style="color:var(--success)">Duração: ${t.duracao} min</small>` : ''}
-                </div>
-                <div>${t.status === 'Concluído' ? '✅' : `<button style="background:${t.inicio?'var(--success)':'var(--warning)'}; width:auto; padding:8px 15px" onclick="acaoTarefa(${t.id}, '${t.inicio?'stop':'start'}')">${t.inicio?'Fim':'Início'}</button>`}</div>
-            </div>`).join('') : "<p style='text-align:center'>Nenhuma tarefa para este dia.</p>";
-    }
+    <div class="card ${t.status === 'Concluído' ? 'concluido' : ''}">
+        <div style="flex: 1;">
+            <span style="font-size:11px; color:#718096">${obterData(t.dia)}</span><br>
+            <strong>${t.andar}</strong><br><small>${t.tarefa}</small>
+            ${t.duracao ? `<br><small style="color:var(--success)">Duração: ${t.duracao} min</small>` : ''}
+        </div>
+        
+        <div style="margin-right: 10px;">
+            <button onclick="falarTarefa('${t.andar}. ${t.tarefa}')" 
+                    style="background: var(--primary); width: 45px; height: 45px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center;">
+                🔊
+            </button>
+        </div>
 
+        <div>
+            ${t.status === 'Concluído' ? '✅' : `<button style="background:${t.inicio?'var(--success)':'var(--warning)'}; width:auto; padding:8px 15px" onclick="acaoTarefa(${t.id}, '${t.inicio?'stop':'start'}')">${t.inicio?'Fim':'Início'}</button>`}
+        </div>
+    </div>`).join('') : "<p style='text-align:center'>Nenhuma tarefa para este dia.</p>";
+    }
     async function acaoTarefa(id, tipo) {
         if(salvando) return;
         const t = tarefas.find(x => x.id == id);
